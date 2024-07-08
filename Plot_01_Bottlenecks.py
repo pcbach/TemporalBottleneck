@@ -178,9 +178,6 @@ plotCongection(4,8,"Melbourne",axs[1][0])
 plotCongection(5,8,"Melbourne",axs[1][1])
 plotCongection(6,8,"Melbourne",axs[1][2])
 
-#plt.subplots_adjust(left= 0,right = 1,bottom=0, top = 1,wspace=0.02, hspace=0.02)
-#plt.tight_layout()
-#fig.set_size_inches(ncols*3.,nrows*3.*plotHeight/plotWidth)
 plt.savefig("./Plot/Congestion.pdf")
 
 plt.show()
