@@ -61,17 +61,16 @@ def plotCongestion(day,time,city,ax):
         CityFull = 'Queensland, Australia'
         minLon, minLat, maxLon, maxLat = 152.9070, -27.6118, 153.1507, -27.3951
         
-
+    #query map data
     bbox = maxLat, minLat, maxLon, minLon
     if not os.path.isfile('./MapData/'+CityShort+'DriveNet.pkl'):
         G = ox.graph_from_bbox(minLat, maxLat, minLon, maxLon, network_type='drive', simplify=True)
         pickle.dump(G, open('./MapData/'+CityShort+'DriveNet.pkl', 'wb'))
     else:
         G = pickle.load(open('./MapData/'+CityShort+'DriveNet.pkl', 'rb'))
-
-
+        
     ox.config(log_console=True, use_cache=True)
-
+    
     if not os.path.isfile('./MapData/'+CityShort+'LandWater.pkl'):
         land = ox.geocode_to_gdf(CityFull)
         poly = ox.utils_geo.bbox_to_poly(*bbox)
@@ -82,10 +81,10 @@ def plotCongestion(day,time,city,ax):
     else:
         with open('./MapData/' + CityShort + 'LandWater.pkl', 'rb') as out_file:
             land, water, vegetation = pickle.load(out_file)
-
-
+            
     eTypeList = []
     deleteList = []
+    
     for uu, vv, kkey, ddata in G.edges(keys=True, data=True):
         eHighway = ddata['highway'][0] if type(ddata['highway'])==list else ddata['highway']
         if eHighway in ['road', 'crossing', 'unclassified', 'disused', 'residential', 'residential_link', 'living_street',
@@ -107,19 +106,17 @@ def plotCongestion(day,time,city,ax):
                 'tertiary': (.33, .2),
                 'busway': (0.66, 0.5)
                 }
-        
     edgeWidth = [edgeVizDict[etype][0] for etype in eTypeList]
     edgeAlpha = [edgeVizDict[etype][1]*5/4 for etype in eTypeList]
     stopClusterData = './MapData/MelNodeCoord.csv' if (city=="Melbourne") else './MapData/BriNodeCoord.csv'
     _, stopDict = read_stop_clusters(stopClusterData,city)
-
     t2i = {5+i/2: i for i in range(37)}
     q = [{} for _ in range(37)]
 
     plotHeight = distance.distance((minLat,minLon),(maxLat,minLon)).km
     plotWidth = distance.distance((minLat,minLon),(minLat,maxLon)).km
     
-    print(plotHeight, plotWidth)
+    #read traffic data
     with open('./'+city+'/FNets/day_'+str(day)+'.pkl', 'rb') as in_f:
         netdata = pickle.load(in_f)
     for tidx in range(37):
@@ -127,10 +124,11 @@ def plotCongestion(day,time,city,ax):
             if netdata[l][tidx] > 0:
                 q[tidx][l] = netdata[l][tidx]
     
-    sortedBNs = list(q[t2i[time]])
+    links = list(q[t2i[time]])
 
+    #plot
     arrow = []
-    for e in sortedBNs[:]:
+    for e in links[:]:
         dist = distance.distance((stopDict[e[0]][1],stopDict[e[0]][0]), (stopDict[e[1]][1],stopDict[e[1]][0])).km
         if dist > 7:
             continue
@@ -144,7 +142,7 @@ def plotCongestion(day,time,city,ax):
         angle = np.arctan2((stopDict[e[0]][1]-stopDict[e[1]][1]),(stopDict[e[0]][0]-stopDict[e[1]][0]))* 180 / np.pi
         theta1,theta2 = (0,180) if (angle>0) else (180,360)
         
-        #plot line
+        #scaling for line width and shift vector
         scale = 1/2.5
         if city =="Melbourne":
             cntr = (cntr[0]+shift[0]/9000/scale,cntr[1]+shift[1]/9000/scale)
@@ -164,24 +162,26 @@ def plotCongestion(day,time,city,ax):
     ox.plot_graph(G, ax=ax, node_size=0, bgcolor='white', edge_color='#aaaaaa', edge_linewidth=edgeWidth, edge_alpha=edgeAlpha, show=False, close=False)
     ax.add_patch(mpatches.Rectangle((minLon,minLat),maxLon-minLon,maxLat-minLat,lw = 1,facecolor = 'none',edgecolor = 'black', zorder=3))
     
+    #plot lines
     ax.add_collection(collection)
+    
+    #adjust plot layout
     ax.set(xlim=(minLon,maxLon), ylim=(minLat,maxLat))
     ax.set_xticks([])
     ax.set_yticks([])
-    
     tt = time if time<13 else (time-12)
     t2h = str(int(np.floor(tt))) + ":" + str(int((tt-np.floor(tt))*60)).zfill(2) + (" AM" if (time<13) else " PM")
-    
     ax.set_title(city+" day "+str(day)+" "+t2h,weight ='bold',fontsize = subfontsize)
     ax.set_aspect((maxLon-minLon)/(maxLat-minLat)*plotHeight/plotWidth)
-    
     ax.set_facecolor(water_color)
 
-nrows = 1
+nrows = 2
 ncols = 2
 fig, axs = plt.subplots(nrows=nrows,ncols=ncols)
-plotCongestion(1,8,"Melbourne",axs[0])
-plotCongestion(1,8,"Brisbane",axs[1])
+plotCongestion(1,8,"Melbourne",axs[0][0])
+plotCongestion(1,8,"Brisbane",axs[1][0])
+plotCongestion(1,17.5,"Melbourne",axs[0][1])
+plotCongestion(1,17.5,"Brisbane",axs[1][1])
 
 fig.set_size_inches(4.*ncols,4.*nrows)
 plt.savefig("./Plot/Congestion.pdf")

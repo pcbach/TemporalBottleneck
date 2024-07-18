@@ -60,7 +60,7 @@ def plotFABottleneck(day,time,city,topCnt,ax):
         CityFull = 'Queensland, Australia'
         minLon, minLat, maxLon, maxLat = 152.9070, -27.6118, 153.1507, -27.3951
         
-
+    #query map data
     bbox = maxLat, minLat, maxLon, minLon
     if not os.path.isfile('./MapData/'+CityShort+'DriveNet.pkl'):
         G = ox.graph_from_bbox(minLat, maxLat, minLon, maxLon, network_type='drive', simplify=True)
@@ -115,6 +115,8 @@ def plotFABottleneck(day,time,city,topCnt,ax):
     plotHeight = distance.distance((minLat,minLon),(maxLat,minLon)).km
     plotWidth = distance.distance((minLat,minLon),(minLat,maxLon)).km
     hourCS = [{} for _ in range(37)]
+    
+    #read criticality score
     with open('./'+city+'/Res/CS/CS_day_' + str(day) + '.pkl', 'rb') as in_f:
         dayCS = pickle.load(in_f)
 
@@ -126,7 +128,7 @@ def plotFABottleneck(day,time,city,topCnt,ax):
             hourCS[tidx][l] += dayCS[tidx][l]/totalFlux
 
     
-    sortedBNs = sorted(hourCS[time], key=lambda x: hourCS[time][x], reverse=True)
+    sortedBNs = sorted(hourCS[t2i[time]], key=lambda x: hourCS[t2i[time]][x], reverse=True)
         
     
 
@@ -140,10 +142,10 @@ def plotFABottleneck(day,time,city,topCnt,ax):
                 continue
             col = Redish_color
             
-            LW = 1/80
+            LW = 1/40
             scale = 1
             scale = (scale-1)/2
-            style="Simple,head_length="+str(0.2*LW*dist)+",head_width="+str(0.3*LW)+",tail_width="+str(0.1*LW)
+            style="Simple,head_length="+str(0.1*LW*dist)+",head_width="+str(0.3*LW)+",tail_width="+str(0.1*LW)
             dir = (stopDict[e[1]][0]-stopDict[e[0]][0],stopDict[e[1]][1]-stopDict[e[0]][1])
             arrow.append(mpatches.FancyArrowPatch(  (stopDict[e[0]][0]-scale*dir[0], stopDict[e[0]][1]-scale*dir[1]),
                                                     (stopDict[e[1]][0]+scale*dir[0], stopDict[e[1]][1]+scale*dir[1]),
@@ -190,6 +192,7 @@ def plotPTBottleneck(day,time,city,ax):
         minLon, minLat, maxLon, maxLat = 152.9070, -27.6118, 153.1507, -27.3951
         
 
+    #query map data
     bbox = maxLat, minLat, maxLon, minLon
     if not os.path.isfile('./MapData/'+CityShort+'DriveNet.pkl'):
         G = ox.graph_from_bbox(minLat, maxLat, minLon, maxLon, network_type='drive', simplify=True)
@@ -243,11 +246,13 @@ def plotPTBottleneck(day,time,city,ax):
     
     plotHeight = distance.distance((minLat,minLon),(maxLat,minLon)).km
     plotWidth = distance.distance((minLat,minLon),(minLat,maxLon)).km
+    
+    #read PT Bottlenecks
     with open('./'+city+'/Res/PT/PT_day_' + str(day) + '.pkl', 'rb') as in_f:
         dayPT = pickle.load(in_f)
 
 
-    BNs = list(dayPT[time])
+    BNs = list(dayPT[t2i[time]])
     arrow = []
     cnt = 0
     for e in BNs:
@@ -257,7 +262,7 @@ def plotPTBottleneck(day,time,city,ax):
             continue
         col = Bluish_color
         
-        LW = 1/80
+        LW = 1/40
         scale = 1
         scale = (scale-1)/2
         style="Simple,head_length="+str(0.2*LW*dist)+",head_width="+str(0.3*LW)+",tail_width="+str(0.1*LW)
@@ -294,9 +299,9 @@ def plotPTBottleneck(day,time,city,ax):
 nrows = 1
 ncols = 2
 fig, axs = plt.subplots(nrows=nrows,ncols=ncols)
-plotPTBottleneck(1,8,"Melbourne",axs[0])
-plotPTBottleneck(1,8,"Brisbane",axs[1])
-plotFABottleneck(1,8,"Melbourne",8,axs[0])
-plotFABottleneck(1,8,"Brisbane",8,axs[1])
+plotPTBottleneck(1,8.5,"Melbourne",axs[0])
+plotPTBottleneck(1,8.5,"Brisbane",axs[1])
+plotFABottleneck(1,8.5,"Melbourne",8,axs[0])
+plotFABottleneck(1,8.5,"Brisbane",8,axs[1])
 fig.set_size_inches(4.*ncols,4.*nrows)
 plt.savefig("./Plot/Bottlenecks.pdf")
