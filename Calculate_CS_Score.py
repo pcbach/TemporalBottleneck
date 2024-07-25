@@ -87,6 +87,3 @@ def calculateDayCS(city,day):
     print('writing...')
     with open('./'+city+'/Res/CS/CS_Day_' + str(day) + '.pkl', 'wb') as out_f:
         pickle.dump(dayCS, out_f)
-
-for i in range(1,15):
-    calculateDayCS("Brisbane",i)
