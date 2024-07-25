@@ -51,6 +51,3 @@ def calculateDayPTB(city,day):
     print('writing...')
     with open('./'+city+'/Res/PT/PT_Day_' + str(day) + '.pkl', 'wb') as out_f:
         pickle.dump(dayPC, out_f)
-        
-for i in range(1,15):
-    calculateDayPTB("Brisbane",i)
